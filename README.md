@@ -6,7 +6,7 @@ This directory contains Python source to populate a Cassandra database with gene
 
 populate_vep_cassandra.py: python script to populate cassandra database with sample data via CQLSH INSERT commands (iterative approach)
 
-mainscript.py: Python script to generate a CSV file amenable to the CQLSH COPY command (e.g. from S3 storage)
+mainscript.py: Python script to generate a CSV file amenable to the CQLSH COPY command (e.g. from S3 storage) using VEP VCF output files
 
 ### An example input line:
 
