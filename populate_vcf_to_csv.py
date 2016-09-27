@@ -2,7 +2,7 @@
 CSV populator object to generate Cassandra-ready CSV from VEP VCF input.
 '''
 
-import gzip, os, sys, csv
+import gzip, os, sys, csv, re
 
 class csv_populator(object):
     '''Class to generate populator object to convert VEP VCF input to Cassandra-ready CSV output.'''
@@ -20,6 +20,11 @@ class csv_populator(object):
     def get_info_field(self):
         return self.vep_field_names
     
+    def _remove_nonalpha(self, stringy):
+        '''Remove non-alphanumeric characters from a string.'''
+        stringy = re.sub('-', '_', stringy) #First, convert hyphens to underscores
+        return re.sub('\W', '', stringy)
+
     def vcf_to_csv(self):
         '''Main method to populate the CSV file from a VEP VCF file'''
         # file open for writing
@@ -40,7 +45,8 @@ class csv_populator(object):
                 line = line.lstrip("#")
                 # vep data
                 if line.find("ID=CSQ") > -1:
-                    self.vep_field_names = line.split('Format: ')[-1].strip('">').split('|')
+                    raw_field_names = line.split('Format: ')[-1].strip('">').split('|')
+                    self.vep_field_names = [self._remove_nonalpha(x) for x in raw_field_names] #Cassandra can't support nonalphanumeric chars.
                 # field header
                 elif line.startswith("CHROM"):
                     self.field = dict(zip(line.split(), range(len(line.split()))))
