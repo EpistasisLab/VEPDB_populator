@@ -7,14 +7,16 @@ import gzip, os, sys, csv, re
 class csv_populator(object):
     '''Class to generate populator object to convert VEP VCF input to Cassandra-ready CSV output.'''
     
-    def __init__(self, input_filename, output_filename):
+    def __init__(self, input_filename, output_filename, gz=True):
         '''Initialize function'''
         self.input_filename = input_filename
         self.output_filename = output_filename
+        self.gz = gz
 
         # data storage
         self.vep_field_names = None
         self.primary_field = ["CHROM", "POS", "REF", "ALT"]
+
         self.field = None
     
     def get_info_field(self):
@@ -28,8 +30,12 @@ class csv_populator(object):
     def vcf_to_csv(self):
         '''Main method to populate the CSV file from a VEP VCF file'''
         # file open for writing
-        w = open(self.output_filename, 'w')
-        wr = csv.writer(w, dialect='excel')
+        if self.gz:
+            w = gzip.open(self.output_filename, 'w')
+        else:
+            w = open(self.output_filename, 'w')
+        
+        wr = csv.writer(w, dialect='excel')            
         
         # creating headers for csv file
         csv_header = [x.lower() for x in self.primary_field[:]]
@@ -37,7 +43,11 @@ class csv_populator(object):
         wr.writerow(csv_header)
                  
         # file open for reading
-        f = open(self.input_filename, 'rb')
+        if self.gz:
+            f = gzip.open(self.input_filename, 'rb')
+        else:
+            f = open(self.input_filename, 'rb')
+
         for line in f:
             line = line.rstrip()
             # Reading header lines
