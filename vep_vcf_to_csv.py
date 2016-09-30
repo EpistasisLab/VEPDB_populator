@@ -5,7 +5,7 @@ University of Pennsylvania
 '''
 
 import argparse, sys, os
-from populate_vcf_to_csv import csv_populator
+from csv_populator import csv_populator
 
 def getargs():
     '''Collect input and output files.'''
