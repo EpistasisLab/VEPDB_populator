@@ -6,6 +6,11 @@
 import gzip, os, sys, csv, re, multiprocessing
 from cassandra import ConsistencyLevel
 from cassandra.cluster import Cluster
+from multiprocessing import Pool
+
+# From http://www.rueckstiess.net/research/snippets/show/ca1d7d90
+def unwrap_db_vcf_update(arg, **kwarg):
+    return populate_vcf.db_vcf_update(*arg, **kwarg)
 
 class populate_vcf(object):
     '''annotator for plain vcf file, fetching data from cassandraDB'''
@@ -66,25 +71,26 @@ class populate_vcf(object):
         re_str = re_str[:-1] + ']'
         return re_str
 
-    def vcf_parser(self):
+    def vcf_byline_insert(self, raw_line):
         field_name = self.fieldname_generator()
+        if not raw_line.startswith("#"):
+            line = raw_line.rstrip()
+            annotation_list = line.split('\t')
+            chrom = annotation_list[0]
+            pos = annotation_list[1] # omit the 3rd one
+            ref = annotation_list[3]
+            alt = annotation_list[4]
+            sub_annotation_list = self.annotation_generator(annotation_list[-1])
+            annotation_str = self.annotation_cql_generator(field_name, sub_annotation_list)
+            self.db_insert((chrom, long(pos), ref, alt), annotation_str)
+
+    def db_vcf_update(self):
         f = open(self.input_filename, 'rb')
-        i = 0
-        for raw_line in f:
-            if not raw_line.startswith("#") and i == 0:
-                line = raw_line.rstrip()
-                annotation_list = line.split('\t')
-                chrom = annotation_list[0]
-                pos = annotation_list[1] # omit the 3rd one
-                ref = annotation_list[3]
-                alt = annotation_list[4]
-                sub_annotation_list = self.annotation_generator(annotation_list[-1])
-                annotation_str = self.annotation_cql_generator(field_name, sub_annotation_list)
-                i += 1
-                self.db_insert((chrom, long(pos), ref, alt), annotation_str)
+        pool = Pool(4)
+        pool.map(unwrap_db_vcf_update, (self, f), 4)
+
 
     def db_insert(self, key_content, insert_content):
-        print insert_content
         insert_statement = self.db_session.prepare(
             "INSERT INTO " + self.table_DB +
             " (chrom, pos, ref, alt, annotations) VALUES" +
@@ -92,11 +98,10 @@ class populate_vcf(object):
         )
         query = insert_statement.bind(key_content)
         query.consistency_level = ConsistencyLevel.ALL
-
         result = self.db_session.execute(query)
-        print result
+
+
 
 if __name__ == "__main__":
     a = populate_vcf("./t/test.vep.vcf", contact_point_DB = ['127.0.0.1'], keyspace_DB = 'vepdb_keyspace', table_DB = 'vepdb')
-    a.vcf_parser()
-    # print a.fieldname_generator()
+    a.db_vcf_update()
