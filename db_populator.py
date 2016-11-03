@@ -14,10 +14,7 @@ input_filename = './t/test.vep.vcf'
 contact_point_DB = ['127.0.0.1']
 keyspace_DB = 'vepdb_keyspace'
 table_DB = 'vepdb'
-cluster = Cluster(contact_points=contact_point_DB)
-db_session = cluster.connect()
-print "Connection to DB established"
-db_session.set_keyspace(keyspace_DB)
+
 
 
 def fieldname_generator():
@@ -63,8 +60,14 @@ def annotation_cql_generator(field_name, annotation_list):
 
 
 def vcf_byline_insert(raw_line):
-    field_name = fieldname_generator()
     if not raw_line.startswith("#"):
+        cluster = Cluster(contact_points=contact_point_DB)
+        db_session = cluster.connect()
+        print "Connection to DB established"
+        db_session.set_keyspace(keyspace_DB)
+
+        field_name = fieldname_generator()
+
         line = raw_line.rstrip()
         annotation_list = line.split('\t')
         chrom = annotation_list[0]
@@ -73,10 +76,10 @@ def vcf_byline_insert(raw_line):
         alt = annotation_list[4]
         sub_annotation_list = annotation_generator(annotation_list[-1])
         annotation_str = annotation_cql_generator(field_name, sub_annotation_list)
-        db_insert((chrom, long(pos), ref, alt), annotation_str)
+        db_insert((chrom, long(pos), ref, alt), annotation_str, db_session)
 
 
-def db_insert( key_content, insert_content):
+def db_insert( key_content, insert_content, db_session):
     insert_statement = db_session.prepare(
         "INSERT INTO " + table_DB +
         " (chrom, pos, ref, alt, annotations) VALUES" +
@@ -97,3 +100,6 @@ if __name__ == "__main__":
     f = open(input_filename, 'rb')
     pool = Pool(4)
     pool.map(vcf_byline_insert, f, 2)
+
+    pool.close()
+    pool.join()
