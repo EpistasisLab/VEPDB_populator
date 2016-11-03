@@ -8,7 +8,6 @@ from cassandra import ConsistencyLevel
 from cassandra.cluster import Cluster
 from multiprocessing import Pool
 
-
 '''annotator for plain vcf file, fetching data from cassandraDB'''
 input_filename = './t/test.vep.vcf'
 contact_point_DB = ['127.0.0.1']
@@ -63,7 +62,7 @@ def vcf_byline_insert(raw_line):
     if not raw_line.startswith("#"):
         cluster = Cluster(contact_points=contact_point_DB)
         db_session = cluster.connect()
-        print "Connection to DB established"
+        # print "Connection to DB established"
         db_session.set_keyspace(keyspace_DB)
 
         field_name = fieldname_generator()
@@ -77,6 +76,8 @@ def vcf_byline_insert(raw_line):
         sub_annotation_list = annotation_generator(annotation_list[-1])
         annotation_str = annotation_cql_generator(field_name, sub_annotation_list)
         db_insert((chrom, long(pos), ref, alt), annotation_str, db_session)
+
+        cluster.shutdown()
 
 
 def db_insert( key_content, insert_content, db_session):
@@ -93,13 +94,13 @@ def db_insert( key_content, insert_content, db_session):
 
 if __name__ == "__main__":
     # single thread:
-    # f = open(input_filename, 'rb')
-    # for line in f:
-    #     vcf_byline_insert(line)
-
     f = open(input_filename, 'rb')
-    pool = Pool(4)
-    pool.map(vcf_byline_insert, f, 2)
-
-    pool.close()
-    pool.join()
+    for line in f:
+        vcf_byline_insert(line)
+    # multi thread
+    # f = open(input_filename, 'rb')
+    # pool = Pool(4)
+    # pool.map(vcf_byline_insert, f, 4)
+    #
+    # pool.close()
+    # pool.join()
