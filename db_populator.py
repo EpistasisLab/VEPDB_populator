@@ -1,17 +1,33 @@
 '''
-    annotator for plain vcf file, fetching data from cassandraDB
+    Batch populating cassandraDB using multiprocessing
+    example of usage:
+
+    python db_populator.py -i "./t/test.vep.vcf" -p 4 -c "127.0.0.1"
+
+    Time Used:  10.5361790657
 '''
 
+import argparse, sys, os
 from cassandra.cluster import Cluster
 from multiprocessing import Pool
 import time
 
-input_filename = './t/test.vep.vcf'
-contact_point_DB = ['127.0.0.1']
-keyspace_DB = 'vepdb_keyspace'
-table_DB = 'vepdb'
-batch_size = 4
+# input_filename = './t/test.vep.vcf'
+# contact_point_DB = []
+keyspace_DB = 'vepdb_keyspace' # hard coded
+table_DB = 'vepdb' # hard coded
 
+def getargs():
+    """
+
+    Collect input and output files.
+    """
+    parser = argparse.ArgumentParser(description=" Batch populating cassandraDB using multiprocessing.")
+    parser.add_argument('-i', '--input_file', required=True, help="Input VEP VCF file to convert to CSV.")
+    parser.add_argument('-c', '--contact_point', required=True, help="Cassandra contact point")
+    parser.add_argument('-p', '--processing_number', required=True, help="Number of workers")
+    args = parser.parse_args()
+    return args
 
 # parse the field name and to store it globally
 def fieldname_generator():
@@ -108,20 +124,20 @@ def db_insert(key_content, insert_content, db_session):
 
 
 if __name__ == "__main__":
-    # single thread:
+    # getting arguments
+    args = getargs()
+    contact_point_DB = [args.contact_point]
+    input_filename = args.input_file
+    batch_size = int(args.processing_number)
+
     start = time.time()
 
-    # f = open(input_filename, 'rb')
-    # for line in f:
-    #     vcf_byline_insert(line)
-    # multi thread
     f = open(input_filename, 'rb')
     pool = Pool(batch_size)
-    # map(func, iterable[, chunksize]) now each worker works with one chunk
     pool.map(vcf_byline_insert, f, batch_size)
 
     pool.close()
     pool.join()
 
     end = time.time()
-    print end - start
+    print "Time Used: ", (end - start)
