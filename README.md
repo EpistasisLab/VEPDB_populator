@@ -30,3 +30,6 @@ Multiple comma-separated annotations are all handled separately and a collection
         }]"
 	    )
 
+
+
+###Repo also includes create_table.cql, a CQL (Cassandra Query Language) to create the VEPDB keyspace and VEPDB table. Requires Cassandra and CQL.
