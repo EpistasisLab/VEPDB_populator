@@ -15,6 +15,11 @@ table_DB = 'vepdb' # hard coded
 contact_point_DB = ['127.0.0.1']
 
 def file_reader(file_name):
+    """
+    Read in input file and prepare the CQL statement
+    :param file_name:
+    :return: return a list of statements
+    """
     statements = []
     with open(file_name) as f:
         for line in f:
@@ -33,16 +38,24 @@ def file_reader(file_name):
 
 
 def do_query(statements):
+    """
+    Do a multiprocessing query using native API
+    :param statements:
+    :return: return CQL a list of Resultset object
+    """
     cluster = Cluster(contact_points=contact_point_DB)
     db_session = cluster.connect()
     db_session.set_keyspace(keyspace_DB)
-
     results = execute_concurrent(db_session, statements, raise_on_first_error=False)
-
     return results
 
 
 def result_vep(result):
+    """
+    Render each result
+    :param result:
+    :return: change result object into vep format string
+    """
     (success, result) = result
     if not success:
         print "Query Failed"
@@ -52,23 +65,28 @@ def result_vep(result):
         container = []
         for item in result[4]:
             container.append('|'.join(item))
-        annotation =  ','.join(container)
+        annotation = ','.join(container)
         return key + annotation + '\n'
 
 
 def mp_handler(result_set):
+    """
+    Handle multiprocessing writing to target file
+    :param result_set:
+    :return:
+    """
     p = multiprocessing.Pool(4)
     with open(target_filename, 'w') as f:
         for re in p.imap(result_vep, result_set):
             f.write(re)
 
 if __name__ == "__main__":
-    statements = file_reader(input_filename)
-    results = do_query(statements)
+    db_statements = file_reader(input_filename)
+    db_results = do_query(db_statements)
 
     # Single Thread version:
     with open(target_filename, 'w') as f:
-        for item in results:
+        for item in db_results:
             f.write(result_vep(item))
 
     # Multithread version: not working
