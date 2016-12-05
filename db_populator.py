@@ -99,7 +99,7 @@ def vcf_byline_insert(raw_line):
         pos = annotation_list[1] # omit the 3rd one
         ref = annotation_list[3]
         alt = annotation_list[4]
-        sub_annotation_list = annotation_generator(annotation_list[-1])
+        sub_annotation_list = annotation_generator(annotation_list[7])
         annotation_str = annotation_cql_generator(field_name, sub_annotation_list)
         db_insert((chrom, long(pos), ref, alt), annotation_str, db_session)
         cluster.shutdown()
