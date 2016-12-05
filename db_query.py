@@ -9,6 +9,7 @@ from cassandra.concurrent import execute_concurrent, execute_concurrent_with_arg
 import multiprocessing
 
 input_filename = './t/test.vcf'
+target_filename = 'results.txt'
 keyspace_DB = 'vepdb_keyspace' # hard coded
 table_DB = 'vepdb' # hard coded
 contact_point_DB = ['127.0.0.1']
@@ -57,7 +58,7 @@ def result_vep(result):
 
 def mp_handler(result_set):
     p = multiprocessing.Pool(4)
-    with open('results.txt', 'w') as f:
+    with open(target_filename, 'w') as f:
         for re in p.imap(result_vep, result_set):
             f.write(re)
 
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     results = do_query(statements)
 
     # Single Thread version:
-    with open('results.txt', 'w') as f:
+    with open(target_filename, 'w') as f:
         for item in results:
             f.write(result_vep(item))
 
