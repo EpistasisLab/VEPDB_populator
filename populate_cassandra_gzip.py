@@ -6,7 +6,7 @@ from threading import Thread
 from cassandra import ConsistencyLevel
 from cassandra.cluster import Cluster
 
-__author__ = 'Dichen Li, MCIT and Brian S. Cole, PhD'
+__author__ = 'Dichen Li MCIT, Yingjie Luan, and Brian S. Cole PhD'
 
 # This is the VEPDB populator. The schema of the DB is:
 #   (chrom:text, pos:bigint, ref:text, alt:text, annotations: List<frozen<annotation>>)
