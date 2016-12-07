@@ -118,7 +118,7 @@ def parse_line(raw_line):
 def insert(raw_line, db_session):
     """Parse a raw line to compose CQL query and execute it to insert the line"""
     if raw_line.startswith('#'):
-        return True #Skip header/metadata lines.
+        return False #Skip header/metadata lines.
 
     parsed = parse_line(raw_line)
     if parsed is None:
@@ -134,11 +134,7 @@ def insert(raw_line, db_session):
     # example query:
     # INSERT INTO vep_db (chrom, pos, ref, alt, annotations) VALUES
     # ('1', 901994, 'G', 'A', [{vep: 'foo', lof:'', lof_filter:'', lof_flags: '', lof_info: '', other_plugins: ''}])
-    try:
-        db_session.execute(query)
-    except:
-        e = sys.exc_info()[0]
-        print "<p>Error: %s</p>" % e
+    db_session.execute(query)
     return True
 
 
@@ -162,19 +158,26 @@ def populate_db(t_idx):
         # Multiple threads are sharing the same session.
         # using more than one session for one key space is not good: http://goo.gl/lkH0rR
         # also session object is thread safe: http://goo.gl/rb9QTp
-        if not insert(line, session):
+        try:
+            re = insert(line, session)
+            if re == True:
+                inserted += 1
+        except:
+            e = sys.exc_info()[0]
+            print e
             bad_count += 1
             bad_lines.append(line)
-        else:
-            inserted += 1
-        if inserted % 1000 == 0 and inserted > 0: # prints after each 1000 lines of inserts
-            percent = float(count) * 100 / lines
-            time_left = (datetime.now() - start_time) * (lines - count) / count
-            print "Thread #" + str(t_idx) + ": " + str(percent) + "% done, est. time left: " + str(time_left)
+        finally:
+            if inserted % 1000 == 0 and inserted > 0:  # prints after each 1000 lines of inserts
+                percent = float(count) * 100 / lines
+                time_left = (datetime.now() - start_time) * (lines - count) / count
+                print "Thread #" + str(t_idx) + ": " + str(percent) + "% done, est. time left: " + str(time_left)
+
     f.close()
     print "Thread #" + str(t_idx) + ": " + str(inserted) + \
           " rows inserted, time spent: " + str(datetime.now() - start_time)
     print "Thread #" + str(t_idx) + ": " + "Bad lines: " + str(bad_count)
+
     for line in bad_lines:
         print line
 
