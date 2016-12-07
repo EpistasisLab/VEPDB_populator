@@ -1,32 +1,23 @@
 ## VEPDB_populator
-####  Brian S. Cole PhD, Dichen Li MCIT, and Zhengxuan Wu
+####  Brian S. Cole PhD, Dichen Li MCIT, Zhengxuan Wu, and Yingjie Luan
 ##### Institute for Biomedical Informatics, University of Pennsylvania Perelman School of Medicine, Philadelphia PA
 
-This directory contains Python source to populate a Cassandra database with genetic variant effect annotations from ENSEMBL Variant Effect Predictor (VEP).
+This directory contains Python source to populate a Cassandra database with genetic variant effect annotations from ENSEMBL Variant Effect Predictor (VEP) output in VCF format (VEP VCF), in which annotation information are stored as CSQ strings.
 
-populate_vep_cassandra.py: python script to populate cassandra database with sample data via CQLSH INSERT commands (iterative approach)
+db_populator.py: parallel Cassandra database population built on the Datastax Python driver and the multiprocessing library for parallel execution.  Input is a VEP VCF file.
 
-mainscript.py: Python script to generate a CSV file amenable to the CQLSH COPY command (e.g. from S3 storage) using VEP VCF output files
-
-### An example input line:
+### An example input line (only the INFO column is displayed):
 
 #### CSQ=A|downstream_gene_variant|MODIFIER|KLHL17|ENSG00000187961|Transcript|ENST00000463212|retained_intron|||||||||||4136|1|HGNC|24023|1|2|3|4
 
-Multiple comma-separated annotations are all handled separately and a collection of the annotations is built.  Here's an example of how that looks in Python:
+Multiple comma-separated annotations are all handled separately and a collection of the annotations is built.
 
 ### An example input line with multiple annotations:
 #### 1  901994  G       A       CSQ=A|downstream_gene_variant|MODIFIER|KLHL17|ENSG00000187961|Transcript|ENST00000463212|retained_intron|||||||||||4136|1|HGNC|24023||||,A|upstream_gene_variant|MODIFIER|PLEKHN1|ENSG00000187583|Transcript|ENST00000480267|retained_intron|||||||||||4261|1|HGNC|25284||||
 
-## Will be converted to (without line break or indent):
-    (1, 901994, 'G', 'A',
-            "[{
-            vep: 'CSQ=A|downstream_gene_variant|MODIFIER|KLHL17|ENSG00000187961|Transcript|ENST00000463212|
-            retained_intron|||||||||||4136|1|HGNC|24023|',
-            lof: '', lof_filter: '', lof_flags: '', lof_info: '', others: ''
-        }, {
-            vep: 'A|upstream_gene_variant|MODIFIER|PLEKHN1|ENSG00000187583|Transcript|ENST00000480267|
-            retained_intron|||||||||||4261|1|HGNC|25284|',
-            lof: '', lof_filter: '', lof_flags: '', lof_info: '', others: ''
-        }]"
-	    )
+Multiple annotations can arise from multiple genes (as shown in this example: KLHL17 and PLEKHN1 are separate, comma-separated annotations), multiple isoforms of the same gene, or polyallelic variants (two or more ALT alleles) which may be layered additionally on top of multiple genes/isoforms.
+
+##Note:
+
+Running this script requires a running Cassandra node or cluster as one or more contact points (IP addresses).  This means the Cassandra node/cluster must be running (nodetool status reports UN status "up-normal"), configured to accept connections over the ports Cassandra requires (9042/9160 e.g.), and with the keyspace, table, and user-defined type already declared.  We provide a CQL script, create_table.cql, which you can source from the CQLSH on a running Cassandra node to automate the creation of the vepdb_keyspace, the vepdb table, and the annotation user-defined type.
 
