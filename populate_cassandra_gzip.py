@@ -25,8 +25,12 @@ KEYSPACE = "vepdb_keyspace"
 LINE_TYPE = "annotation"
 TABLE = "vepdb"
 
-file_name = sys.argv[1]
-contact_points = sys.argv[2:]
+# file_name = sys.argv[1]
+# contact_points = sys.argv[2:]
+
+file_name = './t/test.vep.vcf.gz'
+contact_points = ['127.0.0.1']
+
 
 print "Counting the number of lines in the file..."
 lines = sum(1 for line in gzip.open(file_name, 'rb')) #84801901 from 1kGP, e.g.
@@ -130,7 +134,11 @@ def insert(raw_line, db_session):
     # example query:
     # INSERT INTO vep_db (chrom, pos, ref, alt, annotations) VALUES
     # ('1', 901994, 'G', 'A', [{vep: 'foo', lof:'', lof_filter:'', lof_flags: '', lof_info: '', other_plugins: ''}])
-    db_session.execute(query)
+    try:
+        db_session.execute(query)
+    except:
+        e = sys.exc_info()[0]
+        print "<p>Error: %s</p>" % e
     return True
 
 
