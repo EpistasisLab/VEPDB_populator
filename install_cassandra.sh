@@ -1,5 +1,6 @@
 #install_cassandra.sh
 #Commands to install Java 8 and DataStax Cassandra (with cqlsh)
+#Author: Brian S. Cole PhD and Dichen Li MCIT
 
 #install java
 sudo su
@@ -17,13 +18,14 @@ printf '%s\n%s\n%s\n%s\n%s\n' '[datastax]' 'name = DataStax Repo for Apache Cass
 
 yum install dsc30-3.0.5-1 -y
 yum install cassandra30-tools-3.0.5-1 -y
-pip install cqlsh
+#pip install cqlsh
+#cqlsh will come with the above.
 
-# check if cassandra is running: ps aux | grep cassandra
+#You can check if cassandra is running for some reason (maybe from an AMI?): ps aux | grep cassandra
 # if so, stop it: service cassandra stop
-# in practice I never saw it running at this stage
+
 cd /var/lib/cassandra/
 rm -rf *
 chmod 777 /var/lib/cassandra
 cd /etc/cassandra/conf/
-================================================
+#Ready for cassandra.yaml configuration.
