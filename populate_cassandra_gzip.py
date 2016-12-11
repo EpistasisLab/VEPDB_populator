@@ -66,6 +66,7 @@ def match_annotation(annotation):
     formatted_string = '{' #Start off string to return.
     if len(field_values) == len(field_names): #Good to go.
         for k, v in zip(field_names, field_values):
+            v = re.sub('[\'\"]', '', v) #Strip away any quotation characters that will conflict with CQL quote characters.
             formatted_string += "{}: '{}',".format(k, v)
 
         return formatted_string[:-1] + '}' #Close off string, removing final comma appended directly above.
