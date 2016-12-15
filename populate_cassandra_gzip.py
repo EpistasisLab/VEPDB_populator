@@ -25,8 +25,12 @@ KEYSPACE = "vepdb_keyspace"
 LINE_TYPE = "annotation"
 TABLE = "vepdb"
 
-file_name = sys.argv[1]
-contact_points = sys.argv[2:]
+# file_name = sys.argv[1]
+# contact_points = sys.argv[2:]
+
+file_name = './t/test.vep.vcf.gz'
+contact_points = ['127.0.0.1']
+
 
 print "Counting the number of lines in the file..."
 lines = sum(1 for line in gzip.open(file_name, 'rb')) #84801901 from 1kGP, e.g.
@@ -116,7 +120,7 @@ def parse_line(raw_line):
 def insert(raw_line, db_session):
     """Parse a raw line to compose CQL query and execute it to insert the line"""
     if raw_line.startswith('#'):
-        return True #Skip header/metadata lines.
+        return False #Skip header/metadata lines.
 
     parsed = parse_line(raw_line)
     if parsed is None:
@@ -156,19 +160,26 @@ def populate_db(t_idx):
         # Multiple threads are sharing the same session.
         # using more than one session for one key space is not good: http://goo.gl/lkH0rR
         # also session object is thread safe: http://goo.gl/rb9QTp
-        if not insert(line, session):
+        try:
+            re = insert(line, session)
+            if re == True:
+                inserted += 1
+        except:
+            e = sys.exc_info()[0]
+            print e
             bad_count += 1
             bad_lines.append(line)
-        else:
-            inserted += 1
-        if inserted % 1000 == 0 and inserted > 0: # prints after each 1000 lines of inserts
-            percent = float(count) * 100 / lines
-            time_left = (datetime.now() - start_time) * (lines - count) / count
-            print "Thread #" + str(t_idx) + ": " + str(percent) + "% done, est. time left: " + str(time_left)
+        finally:
+            if inserted % 1000 == 0 and inserted > 0:  # prints after each 1000 lines of inserts
+                percent = float(count) * 100 / lines
+                time_left = (datetime.now() - start_time) * (lines - count) / count
+                print "Thread #" + str(t_idx) + ": " + str(percent) + "% done, est. time left: " + str(time_left)
+
     f.close()
     print "Thread #" + str(t_idx) + ": " + str(inserted) + \
           " rows inserted, time spent: " + str(datetime.now() - start_time)
     print "Thread #" + str(t_idx) + ": " + "Bad lines: " + str(bad_count)
+
     for line in bad_lines:
         print line
 
