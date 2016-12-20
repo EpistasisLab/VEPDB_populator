@@ -25,11 +25,8 @@ KEYSPACE = "vepdb_keyspace"
 LINE_TYPE = "annotation"
 TABLE = "vepdb"
 
-# file_name = sys.argv[1]
-# contact_points = sys.argv[2:]
-
-file_name = './t/test.vep.vcf.gz'
-contact_points = ['127.0.0.1']
+file_name = sys.argv[1]
+contact_points = sys.argv[2:]
 
 
 print "Counting the number of lines in the file..."
