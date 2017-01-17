@@ -119,7 +119,7 @@ def insert(raw_line, db_session):
     if raw_line.startswith('#'):
         return False #Skip header/metadata lines.
 
-    parsed = parse_line(raw_line)
+    parsed = parse_line(raw_line.strip())
     if parsed is None:
         return False
     insert_statement = db_session.prepare(
@@ -177,8 +177,8 @@ def populate_db(t_idx):
           " rows inserted, time spent: " + str(datetime.now() - start_time)
     print "Thread #" + str(t_idx) + ": " + "Bad lines: " + str(bad_count)
 
-    for line in bad_lines:
-        print line
+    # for line in bad_lines:
+    #     print line
 
 
 pool = []
