@@ -2,12 +2,12 @@ Allele , text
 Consequence , text
 IMPACT , text
 SYMBOL , text
-Gene , decimal
+Gene , text
 Feature_type , text
 Feature , text
 BIOTYPE , text
 EXON , text
-INTRON , decimal
+INTRON , text
 HGVSc , text
 HGVSp , text
 cDNA_position , text
