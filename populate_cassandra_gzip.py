@@ -6,6 +6,8 @@ from threading import Thread
 from cassandra import ConsistencyLevel
 from cassandra.cluster import Cluster
 
+import gen_type
+
 __author__ = 'Dichen Li MCIT, Yingjie Luan, Zhengxuan Wu, and Brian S. Cole PhD'
 
 # This is the VEPDB populator. The schema of the DB is:
@@ -50,7 +52,7 @@ def fieldname_generator():
     return raw_field_names
 
 field_names = fieldname_generator()
-
+field_types = gen_type.typegenerator()
 
 def match_annotation(annotation):
     """Use regex to match a annotation line, and format a string ready to insert to Cassandra.
@@ -69,8 +71,12 @@ def match_annotation(annotation):
     if len(field_values) == len(field_names): #Good to go.
         for k, v in zip(field_names, field_values):
             v = re.sub('\'', '\'\'', v) #Escape embedded single quotes with another single quote: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/escape_char_r.html
-            formatted_string += "{}: '{}',".format(k, v)
-
+            if field_types[k] == 'text':
+                formatted_string += "{}: '{}',".format(k, v)
+            elif field_types[k] == 'decimal':
+                formatted_string += "{}: {} ,".format(k, v)
+                # print "{}: {} ,".format(k, v)
+            # print formatted_string
         return formatted_string[:-1] + '}' #Close off string, removing final comma appended directly above.
     else:
         raise Exception("Failed to generate CQL from this string:\n{}".format(annotation))
@@ -111,7 +117,7 @@ def parse_line(raw_line):
         return None  # wrong formatted line
         #Raise an exception here?
     #Return a tuple of the 5 values: 4 are primary key, last is the CQL-formatted annotation string:
-    return chrom, long(pos), ref, alt, "[" + ", ".join(annotations) + "]"
+    return long(chrom), long(pos), ref, alt, "[" + ", ".join(annotations) + "]"
 
 
 def insert(raw_line, db_session):
@@ -129,7 +135,6 @@ def insert(raw_line, db_session):
     )
     query = insert_statement.bind(parsed[:4])
     query.consistency_level = ConsistencyLevel.ALL #Require ALL for consistency level.
-
     # example query:
     # INSERT INTO vep_db (chrom, pos, ref, alt, annotations) VALUES
     # ('1', 901994, 'G', 'A', [{vep: 'foo', lof:'', lof_filter:'', lof_flags: '', lof_info: '', other_plugins: ''}])

@@ -193,6 +193,6 @@ CREATE TYPE IF NOT EXISTS vep_annotation (
 );
 
 CREATE TABLE IF NOT EXISTS vepdb (
-    chrom text, pos bigint, ref text, alt text, annotations list<frozen<vep_annotation>>,
+    chrom bigint, pos bigint, ref text, alt text, annotations list<frozen<vep_annotation>>,
     PRIMARY KEY ((chrom), pos, ref, alt)
 );
