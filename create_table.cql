@@ -2,35 +2,7 @@ CREATE KEYSPACE IF NOT EXISTS vepdb_keyspace WITH replication = {'class': 'Simpl
 
 USE vepdb_keyspace;
 
-CREATE TYPE IF NOT EXISTS vep_annotation (
-    Allele text,
-    Consequence text,
-    IMPACT text,
-    SYMBOL text,
-    Gene text,
-    Feature_type text,
-    Feature text,
-    BIOTYPE text,
-    EXON text,
-    INTRON text,
-    HGVSc text,
-    HGVSp text,
-    cDNA_position text,
-    CDS_position text,
-    Protein_position text,
-    Amino_acids text,
-    Codons text,
-    Existing_variation text,
-    DISTANCE text,
-    STRAND text,
-    FLAGS text,
-    SYMBOL_SOURCE text,
-    HGNC_ID text,
-    REFSEQ_MATCH text,
-    GMAF text,
-    CLIN_SIG text,
-    SOMATIC text,
-    PHENO text,
+CREATE TYPE IF NOT EXISTS GXA (
     GXA_EBV_transformed_lymphocyte text,
     GXA_Experiment text,
     GXA_adipose text,
@@ -172,11 +144,10 @@ CREATE TYPE IF NOT EXISTS vep_annotation (
     GXA_vas_deferens text,
     GXA_venous_blood text,
     GXA_visceral_omentum_adipose_tissue text,
-    GXA_whole_blood text,
-    GO text,
-    CADD_PHRED text,
-    CADD_RAW text,
-    miRNA text,
+    GXA_whole_blood text
+);
+
+CREATE TYPE IF NOT EXISTS ExAC (
     ExAC_AF text,
     ExAC_AF_AFR text,
     ExAC_AF_AMR text,
@@ -192,7 +163,46 @@ CREATE TYPE IF NOT EXISTS vep_annotation (
     ExAC_AF_SAS text
 );
 
+
+
+CREATE TYPE IF NOT EXISTS vep_annotation (
+    Allele text,
+    Consequence list<text>,
+    IMPACT text,
+    SYMBOL text,
+    Gene text,
+    Feature_type text,
+    Feature text,
+    BIOTYPE text,
+    EXON text,
+    INTRON text,
+    HGVSc text,
+    HGVSp text,
+    cDNA_position text,
+    CDS_position text,
+    Protein_position text,
+    Amino_acids text,
+    Codons text,
+    Existing_variation text,
+    DISTANCE text,
+    STRAND text,
+    FLAGS text,
+    SYMBOL_SOURCE text,
+    HGNC_ID text,
+    REFSEQ_MATCH text,
+    GMAF text,
+    CLIN_SIG text,
+    SOMATIC text,
+    PHENO text,
+    GXA frozen<GXA>,
+    GO text,
+    CADD_PHRED text,
+    CADD_RAW text,
+    miRNA text,
+    ExAC frozen<ExAC>
+);
+
 CREATE TABLE IF NOT EXISTS vepdb (
-    chrom text, pos bigint, ref text, alt text, annotations list<frozen<vep_annotation>>,
+    chrom bigint, pos bigint, ref text, alt text, annotations list<frozen<vep_annotation>>,
     PRIMARY KEY ((chrom), pos, ref, alt)
 );
