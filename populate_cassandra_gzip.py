@@ -71,8 +71,10 @@ def match_annotation(annotation):
     if len(field_values) == len(field_names): #Good to go.
         for k, v in zip(field_names, field_values):
             # v = re.sub('\'', '\'\'', v) #Escape embedded single quotes with another single quote: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/escape_char_r.html
-            # v = re.sub('\'', '\'\'', v) #Escape embedded single quotes with another single quote: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/escape_char_r.html
-            formatted_string += "{}: '{}',".format(k, v)
+            if field_types[k] == 'textlist':
+                formatted_string += "{}: '{}',".format(k, '[' + ', '.join(v.split('&')) + ']')
+            else:
+                formatted_string += "{}: '{}',".format(k, v)
         return formatted_string[:-1] + '}' #Close off string, removing final comma appended directly above.
     else:
         raise Exception("Failed to generate CQL from this string:\n{}".format(annotation))

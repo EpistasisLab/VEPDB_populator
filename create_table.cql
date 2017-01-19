@@ -167,7 +167,7 @@ CREATE TYPE IF NOT EXISTS ExAC (
 
 CREATE TYPE IF NOT EXISTS vep_annotation (
     Allele text,
-    Consequence text,
+    Consequence list<text>,
     IMPACT text,
     SYMBOL text,
     Gene text,
