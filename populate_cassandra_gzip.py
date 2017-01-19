@@ -71,12 +71,8 @@ def match_annotation(annotation):
     if len(field_values) == len(field_names): #Good to go.
         for k, v in zip(field_names, field_values):
             # v = re.sub('\'', '\'\'', v) #Escape embedded single quotes with another single quote: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/escape_char_r.html
-            if field_types[k] == 'text':
-                # v = re.sub('\'', '\'\'', v) #Escape embedded single quotes with another single quote: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/escape_char_r.html
-                formatted_string += "{}: '{}',".format(k, v)
-            elif field_types[k] == 'decimal':
-                formatted_string += "{}: {} ,".format(k, v)
-                print "{}: {} ,".format(k, v)
+            # v = re.sub('\'', '\'\'', v) #Escape embedded single quotes with another single quote: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/escape_char_r.html
+            formatted_string += "{}: '{}',".format(k, v)
         return formatted_string[:-1] + '}' #Close off string, removing final comma appended directly above.
     else:
         raise Exception("Failed to generate CQL from this string:\n{}".format(annotation))
@@ -118,6 +114,7 @@ def parse_line(raw_line):
         return None  # wrong formatted line
         #Raise an exception here?
     #Return a tuple of the 5 values: 4 are primary key, last is the CQL-formatted annotation string:
+    # print long(chrom), long(pos), ref, alt, "[" + ", ".join(annotations) + "]"
     return long(chrom), long(pos), ref, alt, "[" + ", ".join(annotations) + "]"
 
 
@@ -180,22 +177,21 @@ def populate_db(t_idx):
                 print "Thread #" + str(t_idx) + ": " + str(percent) + "% done, est. time left: " + str(time_left)
 
     f.close()
-#     print "Thread #" + str(t_idx) + ": " + str(inserted) + \
-#           " rows inserted, time spent: " + str(datetime.now() - start_time)
-#     print "Thread #" + str(t_idx) + ": " + "Bad lines: " + str(bad_count)
-#
-#     # for line in bad_lines:
-#     #     print line
-#
-#
-# pool = []
-# for i in range(0, threads):
-#     t = Thread(target=populate_db, args=(i,))
-#     t.start()
-#     pool.append(t)
-#
-# for t in pool:
-#     t.join()
-#
-# session.shutdown()
-populate_db(0)
+    print "Thread #" + str(t_idx) + ": " + str(inserted) + \
+          " rows inserted, time spent: " + str(datetime.now() - start_time)
+    print "Thread #" + str(t_idx) + ": " + "Bad lines: " + str(bad_count)
+
+    # for line in bad_lines:
+    #     print line
+
+
+pool = []
+for i in range(0, threads):
+    t = Thread(target=populate_db, args=(i,))
+    t.start()
+    pool.append(t)
+
+for t in pool:
+    t.join()
+
+session.shutdown()
